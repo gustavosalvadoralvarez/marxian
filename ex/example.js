@@ -4,29 +4,74 @@ var state = new Marx('example', {
 	storage: 'session'
 })
 
-var ticker = state.worker('ticker', "XMLHttpRequest");
 
-var ticker_processor = function compare_bitfinex(prev, cur, callback) {
+
+var ticker = state.worker('#ticker', "XMLHttpRequest");
+
+var ticker_processor = function get_bitfinex(prev, cur, callback) {
 	return callback(null, {
-		last: prev.bitfinexbtcusd,
-		now: cur.bitfinexbtcusd
+		price: prev.bitfinexbtcusd.last,
+		date: prev.bitfinexbtcusd.date,
+		name: "bitfinexbtcusd",
 	})
 }
 
-var ticker_view = function update_ticker(key, val) {
-	document.getElementById('bitfinex').innerHTML = val;
+ticker.data({
+	frequency: 300, // poll how often?
+	method: "get", //what http method to use?
+	url: 'https://s2.bitcoinwisdom.com/ticker?', //
+	key: "bitfinex-ticker", //key is a queryselector that picks out element's view container
+	filter: "standard", // collapse [rpcesses into filter?
+	processes: [ticker_processor], //what to do with data before passing on to view
+})
+var template_html = "<div class='ticker-el'> \
+			<p><strong>Name:</strong></p>\
+			<p class='ticker-name'></p> \
+			<p><strong>Price:</strong></p>\
+			<p class='ticker-price'></p> \
+			<p><strong>Name:</strong></p>\
+			<p class='ticker-date'></p> \
+		</div>";
+var map = {
+	'.ticker-name': {
+		_text: 'name'
+	},
+	'.ticker-price': {
+		_text: 'price'
+	},
+	'.ticker-date': {
+		_text: 'date'
+	}
 }
+ticker.view('bitfinex-ticker', 'appendChild', template_html, map);
 
-ticker.request({
-	frequency: 300,
-	method: "get",
-	url: 'https://s2.bitcoinwisdom.com/ticker?',
-	key: "bitfinex",
-	filter: "standard",
-	processes: [ticker_processor]
-}).consumer({
-	'bitfinex': ticker_view
-});
+
+/*
+
+
+var ticker_view = function update_ticker(key, val) {
+	var map = {
+		'.ticker-name': {
+			_text: 'name'
+		},
+		'.ticker-price': {
+			_text: 'price'
+		},
+		'.ticker-date': {
+			_text: 'date'
+		}
+	}
+	var template_html = "<div class='ticker-el'> \
+			<p><strong>Name:</strong></p>\
+			<p class='ticker-name'></p> \
+			<p><strong>Price:</strong></p>\
+			<p class='ticker-price'></p> \
+			<p><strong>Name:</strong></p>\
+			<p class='ticker-date'></p> \
+		</div>";
+	var render = state.view(template_html, map)
+	return document.getElementById('ticker').appendChild(render(val));
+}
 
 var wisdom = state.worker('wisdom', 'WebSocket');
 
@@ -52,3 +97,4 @@ symbols.forEach(function(symbol) {
 		processes: [wisdom_processor]
 	}).consumer(consumer)
 })
+*/

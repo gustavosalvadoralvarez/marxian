@@ -1,6 +1,6 @@
-var Store = require('./lib/marx-db2.js'); 
+var Store = require('./lib/marx-store.js'); 
 var Resource = require('./lib/marx-resource.js')
-
+var Render = require('./util/hgrender.js')
 
 module.exports = function Marx(name, ops){ 
 	var self = this, store;
@@ -11,5 +11,6 @@ module.exports = function Marx(name, ops){
 		self._workers[name] = resource = new Resource.input(name, typ, store);
 		return resource;
 	}
+	self.view = Render;
 	return self
 }

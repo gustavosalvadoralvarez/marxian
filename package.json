@@ -1,6 +1,6 @@
 {
   "name": "marxian",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Workers+State",
   "main": "index.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "browserify": "^6.2.0",
+    "hyperglue": "^1.3.3",
     "webworkify": "^1.0.0"
   }
 }
