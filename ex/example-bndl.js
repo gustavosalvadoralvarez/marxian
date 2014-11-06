@@ -1027,7 +1027,7 @@ var ticker_processor = function compare_bitfinex(prev, cur, callback) {
 	})
 }
 
-var ticker_view = function update_ticker (key, val) {
+var ticker_view = function update_ticker(key, val) {
 	document.getElementById('bitfinex').innerHTML = val;
 }
 
@@ -1035,32 +1035,39 @@ ticker.request({
 	frequency: 300,
 	method: "get",
 	url: 'https://s2.bitcoinwisdom.com/ticker?',
-	key: "bitfinex-compare",
+	key: "bitfinex",
 	filter: "standard",
 	processes: [ticker_processor]
-}).consumer(ticker_view);
+}).consumer({
+	'bitfinex': ticker_view
+});
 
 var wisdom = state.worker('wisdom', 'WebSocket');
 
 var wisdom_processor = function get_trades(prev, cur, callback) {
+	console.log(prev)
 	return callback(null, {
 		trades: cur['sdepth']['return']
 	})
 }
 
-var wisdom_view = function update_trades(key, val) {
-	document.getElementById('wisdom').innerHTML = val;
-}
+var symbols = ["bitfinexbtcusd", "bitstampbtcusd", "btcebtcusd", "btceltcbtc", "btceltcusd", "huobibtccny"];
 
-wisdom.request({
-	url: 'wss://d5.bitcoinwisdom.com/',
-	querystring: '?symbol=bitfinexbtcusd',
-	key: "wisdom",
-	filter: "standard",
-	processes: [wisdom_processor]
-}).consumer(wisdom_view)
+symbols.forEach(function(symbol) {
+	var consumer = {};
+	consumer[symbol] = function(key, val) {
+		document.getElementById(symbol).innerHTML = val;
+	}
+	wisdom.request({
+		url: 'wss://d5.bitcoinwisdom.com/',
+		querystring: '?symbol=' + symbol,
+		key: symbol,
+		filter: "standard",
+		processes: [wisdom_processor]
+	}).consumer(consumer)
+})
 },{"../index.js":7}],7:[function(require,module,exports){
-var Store = require('./lib/marx-db.js'); 
+var Store = require('./lib/marx-db2.js'); 
 var Resource = require('./lib/marx-resource.js')
 
 
@@ -1075,7 +1082,7 @@ module.exports = function Marx(name, ops){
 	}
 	return self
 }
-},{"./lib/marx-db.js":8,"./lib/marx-resource.js":9}],8:[function(require,module,exports){
+},{"./lib/marx-db2.js":8,"./lib/marx-resource.js":9}],8:[function(require,module,exports){
 (function (process){
 var inherits = require('util').inherits;
 var ee = require('events').EventEmitter;
@@ -1093,7 +1100,6 @@ function Marx_db(storage) {
 	// Wraps Storage in asynchroneous get and set methods 
 	// Provides 'consumer' pubsub attach api method for Web Workers and callables 
 	var self = this,
-		_wsubs = {},
 		_subs = {},
 		Store;
 	console.log("Marx_db initializing...")
@@ -1156,22 +1162,13 @@ function Marx_db(storage) {
 			var data = msg.data;
 			if (data['set']) {
 				set(collection, data['set'].key, data['set'].value, function update_subs(err, key, updated) {
-					console.log('UPDATE')
-					var wsub, sub;
-					wsub = _wsubs[collection];
+					var sub, ksub;
 					sub = _subs[collection];
-					if (wsub) {
-						wsub.forEach(function _update(worker) {
-							worker.postMessage({
-								"update": {
-									"key": data['set'].key,
-									"value": updated
-								}
-							});
-						})
-					}
-					if (sub) {
-						sub.forEach(function _call(fn) {
+					ksub = sub[data['set'].key] || null;
+					console.log(data['set'].key)
+					console.log(sub)
+					if (ksub) {
+						ksub.forEach(function _call(fn) {
 							fn(data['set'].key, updated);
 						})
 					}
@@ -1187,13 +1184,12 @@ function Marx_db(storage) {
 		return worker
 	}
 
-	self.subscribe_worker = function wsubscribe(worker, collection) {
-		var sub = _wsubs[collection] = _wsubs[collection] || [];
-		sub.push(worker);
-	}
-	self.subscribe = function subscribe(fn, collection) {
-		var sub = _subs[collection] = _subs[collection] || [];
-		sub.push(fn);
+	self.subscribe = function subscribe(collection, sub) {
+		var _sub = _subs[collection] = _subs[collection] || {}, scribers;
+		for (scribers in sub){
+			var ksub = _sub[scribers] = _sub[scribers] || [];
+			ksub.push(sub[scribers])
+		}
 	}
 	return self;
 }
@@ -1236,8 +1232,9 @@ module.exports.input = function Input_Resource(name, typ, store, fltr) {
 		worker.postMessage(requestobj);
 		return self;
 	}
-	self.consumer = function subscription(fn) {
-		store.subscribe(fn, name);
+	self.consumer = function subscription(sub) {
+		console.log(sub)
+			store.subscribe(name, sub);
 		return self;
 	}
 	return self;
@@ -1288,7 +1285,7 @@ module.exports = function ajax_worker(self) {
 									if (++counter === processes.length) {
 										self.postMessage({
 											"set": {
-												key: request.key || request.url,
+												key: request.key || '!',
 												value: JSON.stringify(nres)
 											}
 										})
@@ -1302,7 +1299,7 @@ module.exports = function ajax_worker(self) {
 							} else {
 								self.postMessage({
 									"set": {
-										key: request.key || request.key,
+										key: request.key || '!',
 										value: JSON.stringify(res)
 									}
 								})
@@ -1355,7 +1352,6 @@ module.exports = function websocket_worker(self) {
 			function exec_req() {
 				var endpoint = request.url + (request.querystring || '');
 				transport = new WebSocket(endpoint);
-				console.log('exec');
 				transport.onopen = function() {
 					console.log("socket opened for " + request.url);
 				};
@@ -1366,9 +1362,10 @@ module.exports = function websocket_worker(self) {
 				}
 				transport.onmessage = function(msg) {
 					var res = JSON.parse(msg.data);
-					console.log(res)
+					if (res.type === 'ping'){
+						return
+					}
 					if (msg.data !== last) {
-						console.log('new')
 						filter(last, res, function process_runner(err, fres) {
 							if (processes) {
 								var counter = 0,
@@ -1381,7 +1378,7 @@ module.exports = function websocket_worker(self) {
 									if (++counter === processes.length) {
 										self.postMessage({
 											"set": {
-												key: request.key || request.url,
+												key: request.key || '!',
 												value: JSON.stringify(nres)
 											}
 										})
@@ -1391,12 +1388,11 @@ module.exports = function websocket_worker(self) {
 									ores = nres;
 									return
 								}
-								console.log('prcs')
 								return processes[0](res, fres, _callback);
 							} else {
 								self.postMessage({
 									"set": {
-										key: request.key || request.key,
+										key: request.key || '!',
 										value: JSON.stringify(res)
 									}
 								})

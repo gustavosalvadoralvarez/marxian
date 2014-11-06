@@ -1,4 +1,4 @@
-var Store = require('./lib/marx-db.js'); 
+var Store = require('./lib/marx-db2.js'); 
 var Resource = require('./lib/marx-resource.js')
 
 
