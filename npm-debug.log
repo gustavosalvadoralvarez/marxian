@@ -1,0 +1,105 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files (x86)\\nodejs\\\\node.exe',
+1 verbose cli   'C:\\Program Files (x86)\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'publish' ]
+2 info using npm@1.4.21
+3 info using node@v0.10.30
+4 verbose node symlink C:\Program Files (x86)\nodejs\\node.exe
+5 verbose publish [ '.' ]
+6 verbose cache add [ '.', null ]
+7 verbose cache add name=undefined spec="." args=[".",null]
+8 verbose parsed url { protocol: null,
+8 verbose parsed url   slashes: null,
+8 verbose parsed url   auth: null,
+8 verbose parsed url   host: null,
+8 verbose parsed url   port: null,
+8 verbose parsed url   hostname: null,
+8 verbose parsed url   hash: null,
+8 verbose parsed url   search: null,
+8 verbose parsed url   query: null,
+8 verbose parsed url   pathname: '.',
+8 verbose parsed url   path: '.',
+8 verbose parsed url   href: '.' }
+9 silly lockFile 3a52ce78- .
+10 verbose lock . C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\3a52ce78-.lock
+11 verbose tar pack [ 'C:\\Users\\Gustavo Alvarez\\AppData\\Roaming\\npm-cache\\marxian\\0.4.0\\package.tgz',
+11 verbose tar pack   '.' ]
+12 verbose tarball C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package.tgz
+13 verbose folder .
+14 info prepublish marxian@0.4.0
+15 silly lockFile 1f1177db-tar tar://.
+16 verbose lock tar://. C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\1f1177db-tar.lock
+17 silly lockFile efe7e1a0--cache-marxian-0-4-0-package-tgz tar://C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package.tgz
+18 verbose lock tar://C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package.tgz C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\efe7e1a0--cache-marxian-0-4-0-package-tgz.lock
+19 silly lockFile 1f1177db-tar tar://.
+20 silly lockFile 1f1177db-tar tar://.
+21 silly lockFile efe7e1a0--cache-marxian-0-4-0-package-tgz tar://C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package.tgz
+22 silly lockFile efe7e1a0--cache-marxian-0-4-0-package-tgz tar://C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package.tgz
+23 silly lockFile 36d9cd24--npm-cache-marxian-0-4-0-package C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package
+24 verbose lock C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\36d9cd24--npm-cache-marxian-0-4-0-package.lock
+25 silly lockFile 36d9cd24--npm-cache-marxian-0-4-0-package C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package
+26 silly lockFile 36d9cd24--npm-cache-marxian-0-4-0-package C:\Users\Gustavo Alvarez\AppData\Roaming\npm-cache\marxian\0.4.0\package
+27 silly lockFile 3a52ce78- .
+28 silly lockFile 3a52ce78- .
+29 silly publish { name: 'marxian',
+29 silly publish   version: '0.4.0',
+29 silly publish   description: 'Workers+State',
+29 silly publish   main: 'index.js',
+29 silly publish   scripts: { test: 'echo "Error: no test specified" && exit 1' },
+29 silly publish   author: { name: 'GSA' },
+29 silly publish   license: 'ISC',
+29 silly publish   dependencies:
+29 silly publish    { browserify: '^6.2.0',
+29 silly publish      hyperglue: '^1.3.3',
+29 silly publish      webworkify: '^1.0.0' },
+29 silly publish   gitHead: '2f3bfb5a40cbaeaca4b3f2e42d1b0eb61041adc9',
+29 silly publish   readme: 'ERROR: No README data found!',
+29 silly publish   _id: 'marxian@0.4.0',
+29 silly publish   _shasum: '3a943feb7a60f8d1ca071bfe27782080feef8d69',
+29 silly publish   _from: '.' }
+30 verbose request where is /marxian
+31 verbose request registry https://registry.npmjs.org/
+32 verbose request id 20337446cb05ee83
+33 verbose url raw /marxian
+34 verbose url resolving [ 'https://registry.npmjs.org/', './marxian' ]
+35 verbose url resolved https://registry.npmjs.org/marxian
+36 verbose request where is https://registry.npmjs.org/marxian
+37 info trying registry request attempt 1 at 20:39:08
+38 http PUT https://registry.npmjs.org/marxian
+39 http 403 https://registry.npmjs.org/marxian
+40 verbose headers { date: 'Fri, 07 Nov 2014 01:39:08 GMT',
+40 verbose headers   server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+40 verbose headers   'content-type': 'application/json',
+40 verbose headers   'cache-control': 'max-age=60',
+40 verbose headers   'content-length': '1815',
+40 verbose headers   'accept-ranges': 'bytes',
+40 verbose headers   via: '1.1 varnish',
+40 verbose headers   'x-served-by': 'cache-jfk1021-JFK',
+40 verbose headers   'x-cache': 'MISS',
+40 verbose headers   'x-cache-hits': '0',
+40 verbose headers   'x-timer': 'S1415324348.527192,VS0,VE157',
+40 verbose headers   'keep-alive': 'timeout=10, max=50',
+40 verbose headers   connection: 'Keep-Alive' }
+41 error publish Failed PUT 403
+42 error Error: forbidden cannot modify pre-existing version: 0.4.0
+42 error old={"name":"marxian","version":"0.4.0","description":"Workers+State","main":"index.js","scripts":{"test":"echo \"Error: no test specified\" && exit 1"},"author":{"name":"GSA"},"license":"ISC","dependencies":{"browserify":"^6.2.0","hyperglue":"^1.3.3","webworkify":"^1.0.0"},"gitHead":"2f3bfb5a40cbaeaca4b3f2e42d1b0eb61041adc9","_id":"marxian@0.4.0","_shasum":"efe6957fc42b39fae28df68eb2a70afc550cf4e6","_from":".","_npmVersion":"1.4.21","_npmUser":{"name":"gustavosalvadoralvarez","email":"gustavosalvadoralvarez@gmail.com"},"maintainers":[{"name":"gustavosalvadoralvarez","email":"gustavosalvadoralvarez@gmail.com"}],"dist":{"shasum":"efe6957fc42b39fae28df68eb2a70afc550cf4e6","tarball":"http://registry.npmjs.org/marxian/-/marxian-0.4.0.tgz"}}
+42 error new={"name":"marxian","version":"0.4.0","description":"Workers+State","main":"index.js","scripts":{"test":"echo \"Error: no test specified\" && exit 1"},"author":{"name":"GSA"},"license":"ISC","dependencies":{"browserify":"^6.2.0","hyperglue":"^1.3.3","webworkify":"^1.0.0"},"gitHead":"2f3bfb5a40cbaeaca4b3f2e42d1b0eb61041adc9","readme":"ERROR: No README data found!","_id":"marxian@0.4.0","_shasum":"3a943feb7a60f8d1ca071bfe27782080feef8d69","_from":".","_npmVersion":"1.4.21","_npmUser":{"name":"gustavosalvadoralvarez","email":"gustavosalvadoralvarez@gmail.com"},"maintainers":[{"name":"gustavosalvadoralvarez","email":"gustavosalvadoralvarez@gmail.com"}],"dist":{"shasum":"3a943feb7a60f8d1ca071bfe27782080feef8d69","tarball":"http://registry.npmjs.org/marxian/-/marxian-0.4.0.tgz"}}: marxian
+42 error     at RegClient.<anonymous> (C:\Program Files (x86)\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:300:14)
+42 error     at Request._callback (C:\Program Files (x86)\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:238:65)
+42 error     at Request.self.callback (C:\Program Files (x86)\nodejs\node_modules\npm\node_modules\request\request.js:123:22)
+42 error     at Request.emit (events.js:98:17)
+42 error     at Request.<anonymous> (C:\Program Files (x86)\nodejs\node_modules\npm\node_modules\request\request.js:893:14)
+42 error     at Request.emit (events.js:117:20)
+42 error     at IncomingMessage.<anonymous> (C:\Program Files (x86)\nodejs\node_modules\npm\node_modules\request\request.js:844:12)
+42 error     at IncomingMessage.emit (events.js:117:20)
+42 error     at _stream_readable.js:938:16
+42 error     at process._tickCallback (node.js:419:13)
+43 error If you need help, you may report this *entire* log,
+43 error including the npm and node versions, at:
+43 error     <http://github.com/npm/npm/issues>
+44 error System Windows_NT 6.2.9200
+45 error command "C:\\Program Files (x86)\\nodejs\\\\node.exe" "C:\\Program Files (x86)\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "publish"
+46 error cwd C:\Users\Gustavo Alvarez\Documents\GitHub\marxian
+47 error node -v v0.10.30
+48 error npm -v 1.4.21
+49 verbose exit [ 1, true ]

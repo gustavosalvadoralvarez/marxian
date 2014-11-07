@@ -94,45 +94,70 @@ var state = new Marx('example', {
 })
 
 
-
+// init stuff
 var ticker = state.worker('#ticker', "XMLHttpRequest");
 
-var ticker_processor = function get_bitfinex(prev, cur, callback) {
-	return callback(null, {
-		price: prev.bitfinexbtcusd.last,
-		date: prev.bitfinexbtcusd.date,
-		name: "bitfinexbtcusd",
+var get_bitfinex = function bitfinex_filter(prev, cur, callback) {
+	return callback(null, {'.row': 
+		[{
+			price: prev.bitfinexbtcusd.last,
+			date: prev.bitfinexbtcusd.date,
+			name: "bitfinexbtcusd",
+		}, {
+			price: prev.bitstampbtcusd.last,
+			date: prev.bitstampbtcusd.date,
+			name: "bitstampbtcusd",
+		}, {
+			price: prev.btcebtcusd.last,
+			date: prev.btcebtcusd.date,
+			name: "btcebtcusd",
+		}, {
+			price: prev.huobibtccny.last,
+			date: prev.huobibtccny.date,
+			name: "huobibtccny",
+		}]
 	})
 }
 
-ticker.data({
-	frequency: 300, // poll how often?
-	method: "get", //what http method to use?
-	url: 'https://s2.bitcoinwisdom.com/ticker?', //
-	key: "bitfinex-ticker", //key is a queryselector that picks out element's view container
-	filter: "standard", // collapse [rpcesses into filter?
-	processes: [ticker_processor], //what to do with data before passing on to view
-})
-var template_html = "<div class='ticker-el'> \
-			<p><strong>Name:</strong></p>\
-			<p class='ticker-name'></p> \
-			<p><strong>Price:</strong></p>\
-			<p class='ticker-price'></p> \
-			<p><strong>Name:</strong></p>\
-			<p class='ticker-date'></p> \
-		</div>";
-var map = {
-	'.ticker-name': {
-		_text: 'name'
-	},
-	'.ticker-price': {
-		_text: 'price'
-	},
-	'.ticker-date': {
-		_text: 'date'
-	}
-}
-ticker.view('bitfinex-ticker', 'appendChild', template_html, map);
+ticker
+	.data({
+
+		frequency: 300,
+		// poll how often?
+		method: "get",
+		// what HTTP method to use?
+		url: 'https://s2.bitcoinwisdom.com/ticker?',
+		// URL string
+		key: "bitfinex-ticker",
+		//key related this request with a particular view
+		filter: "standard",
+		// collapse into processes?
+		processes: [get_bitfinex],
+		//what to do with data before passing on to view
+	})
+	.view(
+		'bitfinex-ticker', //key relating this view to the request above
+		'appendChild', //method to use on parent element (#ticker from line 9) to insert view element
+
+		[
+			'<div id="rows">',
+			'<div class="row">',
+			'<p>Name:</p>',
+			'<p class="name"></p>',
+			'<p>Price:</p>',
+			'<p class="price"></p>',
+			'<p>Date:</p>',
+			'<p class="date"></p>',
+			'</br>',
+			'</div>',
+			'</div>'
+		].join(''), {
+			'.row': [{
+				'.name': 'name',
+				'.price': 'price',
+				'.date': 'date'
+			}]
+		});
 
 
 /*
@@ -372,8 +397,8 @@ function Marx_db(storage) {
 		}
 		sub[key] = view
 		self.subscribe(collection, sub);
-		console.log(collection);
-		console.log(sub)
+		//console.log(collection);
+		//console.log(sub)
 	}
 	return self;
 }
@@ -902,15 +927,28 @@ standard(old, new2, function(err, res) {
 var hyperglue = require('hyperglue');
 
 module.exports = function mk_render(html, map) {
-	return function render (data) {
-		var hgmap={}, smap, sghmap, selector, attr;
+	return function render(data) {
+		var hgmap = {},
+			smap, sghmap, selector, attr;
 		data = JSON.parse(data);
-		for (selector in map){
-			smap = map[selector],
-			shgmap = hgmap[selector] = {};
-			for (attr in smap){
-				shgmap[attr] = data[smap[attr]];
-				console.log(data[attr])
+		for (selector in map) {
+			smap = map[selector];
+			if (Array.isArray(smap)) {
+				var rowdata = data[selector],
+					rowmap = smap[0];
+				hgmap[selector] = rowdata.map(function _mk(row) {
+					var row_el={};
+					console.log(row)
+					for (attr in rowmap) {
+						row_el[attr] = row[rowmap[attr]];
+					}
+					return row_el
+				})
+			} else {
+				shgmap = hgmap[selector] = {};
+				for (attr in smap) {
+					shgmap[attr] = data[smap[attr]];
+				}
 			}
 		}
 		console.log(hgmap)
