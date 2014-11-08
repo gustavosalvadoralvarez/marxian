@@ -1,6 +1,6 @@
 var Store = require('./lib/marx-store.js'); 
 var Resource = require('./lib/marx-resource.js')
-var Render = require('./util/hgrender.js')
+var Render = require('./util/hgrender2.js')
 
 module.exports = function Marx(name, ops){ 
 	var self = this, store;

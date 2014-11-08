@@ -8,50 +8,72 @@ var state = new Marx('example', {
 // init stuff
 var ticker = state.worker('#ticker', "XMLHttpRequest");
 
-var get_bitfinex = function bitfinex_filter(prev, cur, callback) {
-	return callback(null, {'.row': 
-		[{
-			price: prev.bitfinexbtcusd.last,
-			date: prev.bitfinexbtcusd.date,
-			name: "bitfinexbtcusd",
-		}, {
-			price: prev.bitstampbtcusd.last,
-			date: prev.bitstampbtcusd.date,
-			name: "bitstampbtcusd",
-		}, {
-			price: prev.btcebtcusd.last,
-			date: prev.btcebtcusd.date,
-			name: "btcebtcusd",
-		}, {
-			price: prev.huobibtccny.last,
-			date: prev.huobibtccny.date,
-			name: "huobibtccny",
-		}]
+var get_ticker_data = function(prev, cur, callback) {
+	return callback(null, [{
+		'.price': {
+			_text: prev.bitfinexbtcusd.last
+		},
+		'.date': {
+			_text: prev.bitfinexbtcusd.date
+		},
+		'.name': {
+			_text: "bitfinexbtcusd"
+		},
+	}, {
+		'.price': {
+			_text: prev.bitstampbtcusd.last
+		},
+		'.date': {
+			_text: prev.bitstampbtcusd.date
+		},
+		'.date': {
+			_text: "bitstampbtcusd"
+		},
+	}, {
+		'.price': {
+			_text: prev.btcebtcusd.last
+		},
+		'.date': {
+			_text: prev.btcebtcusd.date
+		},
+		'.name': {
+			_text: "btcebtcusd"
+		},
+	}, {
+		'.price': {
+			_text: prev.huobibtccny.last
+		},
+		'.date': {
+			_text: prev.huobibtccny.date
+		},
+		'.name': {
+			_text: "huobibtccny"
+		},
+	}])
+}
+var update_ticker = function(key, updated) {
+	console.log(updated)
+	updated.forEach(function append(u) {
+		var parent = document.getElementById('ticker')
+		parent.childNodes()[0].outerHTML = u;
+
 	})
 }
-
 ticker
 	.data({
-
 		frequency: 300,
 		// poll how often?
 		method: "get",
 		// what HTTP method to use?
 		url: 'https://s2.bitcoinwisdom.com/ticker?',
 		// URL string
-		key: "bitfinex-ticker",
+		key: "ticker",
 		//key related this request with a particular view
 		filter: "standard",
 		// collapse into processes?
-		processes: [get_bitfinex],
-		//what to do with data before passing on to view
-	})
-	.view(
-		'bitfinex-ticker', //key relating this view to the request above
-		'appendChild', //method to use on parent element (#ticker from line 9) to insert view element
-
-		[
-			'<div id="rows">',
+		processes: [get_ticker_data],
+		//what to do with data before passing on to view (line 11)
+		template: [
 			'<div class="row">',
 			'<p>Name:</p>',
 			'<p class="name"></p>',
@@ -61,19 +83,15 @@ ticker
 			'<p class="date"></p>',
 			'</br>',
 			'</div>',
-			'</div>'
-		].join(''), {
-			'.row': [{
-				'.name': 'name',
-				'.price': 'price',
-				'.date': 'date'
-			}]
-		});
-
+		].join('')
+	}).consumer({
+		'ticker': update_ticker
+	})
 
 /*
-
-
+style="width:0,height:0,display:none;visibility:hidden"
+			'<div class="marx-tag"style="width:0,height:0,display:none;visibility:hidden"
+></div>',
 var ticker_view = function update_ticker(key, val) {
 	var map = {
 		'.ticker-name': {
