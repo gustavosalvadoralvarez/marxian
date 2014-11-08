@@ -8,59 +8,72 @@ var state = new Marx('example', {
 // init stuff
 var ticker = state.worker('#ticker', "XMLHttpRequest");
 
+var ticker_template = '<div class="trade-event up">\
+					<div class="ticker sup">BTCUSD</div>\
+					<div class="exchange-short sub">BFX</div>\
+					<div class="price sup">348.24</div>\
+					<div class="amount sub">10.23</div>\
+				</div>';
+
 var get_ticker_data = function(prev, cur, callback) {
 	return callback(null, [{
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BFX"
+		},
 		'.price': {
 			_text: prev.bitfinexbtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.bitfinexbtcusd.date
-		},
-		'.name': {
-			_text: "bitfinexbtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BTSP"
+		},
 		'.price': {
 			_text: prev.bitstampbtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.bitstampbtcusd.date
-		},
-		'.date': {
-			_text: "bitstampbtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BTCEB"
+		},
 		'.price': {
 			_text: prev.btcebtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.btcebtcusd.date
-		},
-		'.name': {
-			_text: "btcebtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCCNY"
+		},
+		'.exchange-short': {
+			_text: "HUOBI"
+		},
 		'.price': {
 			_text: prev.huobibtccny.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.huobibtccny.date
-		},
-		'.name': {
-			_text: "huobibtccny"
-		},
+		}
 	}])
 }
-var update_ticker = function(key, updated) {
-	console.log(updated)
-	updated.forEach(function append(u) {
-		var parent = document.getElementById('ticker')
-		parent.childNodes()[0].outerHTML = u;
 
-	})
-}
-ticker
-	.data({
+var update_ticker = state.util.view_buffer.lifo('ticker', 200)
+
+ticker.data({
 		frequency: 300,
 		// poll how often?
 		method: "get",
@@ -73,17 +86,7 @@ ticker
 		// collapse into processes?
 		processes: [get_ticker_data],
 		//what to do with data before passing on to view (line 11)
-		template: [
-			'<div class="row">',
-			'<p>Name:</p>',
-			'<p class="name"></p>',
-			'<p>Price:</p>',
-			'<p class="price"></p>',
-			'<p>Date:</p>',
-			'<p class="date"></p>',
-			'</br>',
-			'</div>',
-		].join('')
+		template: ticker_template
 	}).consumer({
 		'ticker': update_ticker
 	})

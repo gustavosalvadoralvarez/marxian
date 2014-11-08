@@ -4538,59 +4538,72 @@ var state = new Marx('example', {
 // init stuff
 var ticker = state.worker('#ticker', "XMLHttpRequest");
 
+var ticker_template = '<div class="trade-event up">\
+					<div class="ticker sup">BTCUSD</div>\
+					<div class="exchange-short sub">BFX</div>\
+					<div class="price sup">348.24</div>\
+					<div class="amount sub">10.23</div>\
+				</div>';
+
 var get_ticker_data = function(prev, cur, callback) {
 	return callback(null, [{
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BFX"
+		},
 		'.price': {
 			_text: prev.bitfinexbtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.bitfinexbtcusd.date
-		},
-		'.name': {
-			_text: "bitfinexbtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BTSP"
+		},
 		'.price': {
 			_text: prev.bitstampbtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.bitstampbtcusd.date
-		},
-		'.date': {
-			_text: "bitstampbtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCUSD"
+		},
+		'.exchange-short': {
+			_text: "BTCEB"
+		},
 		'.price': {
 			_text: prev.btcebtcusd.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.btcebtcusd.date
-		},
-		'.name': {
-			_text: "btcebtcusd"
-		},
+		}
 	}, {
+		'.ticker': {
+			_text: "BTCCNY"
+		},
+		'.exchange-short': {
+			_text: "HUOBI"
+		},
 		'.price': {
 			_text: prev.huobibtccny.last
 		},
-		'.date': {
+		'.amount': {
 			_text: prev.huobibtccny.date
-		},
-		'.name': {
-			_text: "huobibtccny"
-		},
+		}
 	}])
 }
-var update_ticker = function(key, updated) {
-	console.log(updated)
-	updated.forEach(function append(u) {
-		var parent = document.getElementById('ticker')
-		parent.childNodes()[0].outerHTML = u;
 
-	})
-}
-ticker
-	.data({
+var update_ticker = state.util.view_buffer.lifo('ticker', 200)
+
+ticker.data({
 		frequency: 300,
 		// poll how often?
 		method: "get",
@@ -4603,17 +4616,7 @@ ticker
 		// collapse into processes?
 		processes: [get_ticker_data],
 		//what to do with data before passing on to view (line 11)
-		template: [
-			'<div class="row">',
-			'<p>Name:</p>',
-			'<p class="name"></p>',
-			'<p>Price:</p>',
-			'<p class="price"></p>',
-			'<p>Date:</p>',
-			'<p class="date"></p>',
-			'</br>',
-			'</div>',
-		].join('')
+		template: ticker_template
 	}).consumer({
 		'ticker': update_ticker
 	})
@@ -4672,15 +4675,19 @@ symbols.forEach(function(symbol) {
 })
 */
 },{"../index.js":26}],26:[function(require,module,exports){
-var Store = require('./lib/marx-store.js'); 
+var Store = require('./lib/marx-store.js');
 var Resource = require('./lib/marx-resource.js')
 var Render = require('./util/hgrender2.js')
 
-module.exports = function Marx(name, ops){ 
-	var self = this, store;
-	self.db = store = new Store(ops.storage); 
+
+module.exports = function Marx(name, ops) {
+	var self = this,
+		store;
+	self.db = store = new Store(ops.storage);
 	self._workers = {};
-	self.worker = function add_resource(name, typ) { 
+	self.util = {};
+	self.util.view_buffer = require('./util/view-buffer.js');
+	self.worker = function add_resource(name, typ) {
 		var resource;
 		self._workers[name] = resource = new Resource.input(name, typ, store);
 		return resource;
@@ -4688,7 +4695,7 @@ module.exports = function Marx(name, ops){
 	self.view = Render;
 	return self
 }
-},{"./lib/marx-resource.js":27,"./lib/marx-store.js":28,"./util/hgrender2.js":97}],27:[function(require,module,exports){
+},{"./lib/marx-resource.js":27,"./lib/marx-store.js":28,"./util/hgrender2.js":97,"./util/view-buffer.js":98}],27:[function(require,module,exports){
 var webworkify = require('webworkify');
 
 module.exports.input = function Input_Resource(name, typ, store, fltr) {
@@ -18029,4 +18036,25 @@ module.exports = function mk_render(html, obj) {
 		}
 	}
 }
-},{"hyperglue":93}]},{},[25]);
+},{"hyperglue":93}],98:[function(require,module,exports){
+module.exports.lifo = function(parent, interval) {
+	var parent = document.getElementById('parent'),
+		buffer = [];
+	return function buffered(k, v) {
+		if (v && !buffered.length) {
+			buffer.concat(v)
+			setTimeout(interval, buffered);
+		} else if (v) {
+			buffer.concat(v);
+		} else {
+			var nxt = buffer.unshift();
+			parent.removeChild(parent.childNodes[0])
+			parent.appendChild(nxt);
+			if (buffer.length) {
+				setTimeout(interval, buffered);
+			}
+
+		}
+	}
+}
+},{}]},{},[25]);
