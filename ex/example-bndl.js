@@ -4855,48 +4855,6 @@ function Marx_db(storage) {
 		}
 	}
 
-	self.add_view = function mk_view(collection, typ, key, template) {
-		var _tmp = _tmps[collection] = _tmps[collection] || {},
-			_ttmp = _tmp[typ] || {};
-		_ttmp[key] = template;
-		switch (typ) {
-			case "appendChild":
-				view = function(k, val) {
-					var parent = document.querySelector(collection);
-					return parent.appendChild(hyperglue(_ttmp[k], val));
-				}
-				break;
-			case "replaceFirst":
-				view = function(k, val) {
-					var parent = document.querySelector(collection);
-					return parent.replaceChild(hyperglue(_ttmp[k], val), parent.childNodes[0]);
-				}
-				break;
-			case "replaceLast":
-				view = function(k, val) {
-					var parent = document.querySelector(collection);
-					return parent.replaceChild(hyperglue(_ttmp[k], val), parent.childNodes[parent.childNodes.length - 1]);
-				}
-				break;
-			case 'replace-data-marx':
-				view = function(k, val) {
-					var parent = document.querySelector(collection),
-						vdata = val['data-marx'];
-					if (vdata) {
-						return parent.replaceChild(hyperglue(_ttmp[k], val), parent.querySelector('[data-marx=' + vdata + ']'));
-					} else {
-						console.log("data-marx not found for " + JSON.stringify(val));
-					}
-				}
-				break;
-			default:
-				throw new Error("View type " + typ + " not supported")
-		}
-		sub[key] = view
-		self.subscribe(collection, sub);
-		//console.log(collection);
-		//console.log(sub)
-	}
 	return self;
 }
 }).call(this,require('_process'))
@@ -18038,22 +17996,23 @@ module.exports = function mk_render(html, obj) {
 }
 },{"hyperglue":93}],98:[function(require,module,exports){
 module.exports.lifo = function(parent, interval) {
-	var parent = document.getElementById('parent'),
+	var parent = document.getElementById(parent),
 		buffer = [];
 	return function buffered(k, v) {
-		if (v && !buffered.length) {
-			buffer.concat(v)
+		console.log('view called')
+		if (v) {
+			buffer = buffer.concat(v);
+		}
+		var nxt = buffer.shift();
+		var frst = parent.children[0];
+		console.log(buffer);
+		console.log(nxt)
+		if (frst){
+			parent.removeChild(frst);
+		}
+		parent.innerHTML += nxt;
+		if (buffer.length) {
 			setTimeout(interval, buffered);
-		} else if (v) {
-			buffer.concat(v);
-		} else {
-			var nxt = buffer.unshift();
-			parent.removeChild(parent.childNodes[0])
-			parent.appendChild(nxt);
-			if (buffer.length) {
-				setTimeout(interval, buffered);
-			}
-
 		}
 	}
 }

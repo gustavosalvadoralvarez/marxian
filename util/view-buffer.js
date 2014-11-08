@@ -1,16 +1,19 @@
 module.exports.lifo = function(parent, interval) {
-	var parent = document.getElementById('parent'),
+	var parent = document.getElementById(parent),
 		buffer = [];
 	return function buffered(k, v) {
-		if (v && !buffered.length) {
-			buffer.concat(v)
-			setTimeout(interval, buffered);
-		} else if (v) {
-			return buffer.concat(v);
+		console.log('view called')
+		if (v) {
+			buffer = buffer.concat(v);
 		}
-		var nxt = buffer.unshift();
-		parent.removeChild(parent.childNodes[0])
-		parent.appendChild(nxt);
+		var nxt = buffer.shift();
+		var frst = parent.children[0];
+		console.log(buffer);
+		console.log(nxt)
+		if (frst){
+			parent.removeChild(frst);
+		}
+		parent.innerHTML += nxt;
 		if (buffer.length) {
 			setTimeout(interval, buffered);
 		}
