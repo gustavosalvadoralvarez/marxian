@@ -1,0 +1,306 @@
+body {
+	background-color: rgba(0,0,0,1)
+}
+
+div {
+	text-align: center;
+	font-family: 'VT323';
+}
+
+li {
+	
+}
+
+a{
+  text-decoration:none; 
+  -webkit-transition: all 0.1s;
+  -moz-transition: all 0.1s;
+  transition: all 0.1s;
+}
+
+.fullWidth {
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: initial;
+}
+
+.center-vertical {
+	position: relative;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.tape {
+
+	background-color: #000;
+
+	vertical-align: middle;
+
+	border-top-style: solid;
+	border-bottom-style: solid;
+	border-right-style: none;
+	border-left-style: none;
+
+	border-top-width: 1px;
+	border-bottom-width: 1px;
+
+	border-top-color: rgba(0,0,0,1);
+	border-bottom-color: rgba(0,0,0,1);
+
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-right: 0em;
+	margin-left: 0em;
+
+	/*font-size: 3em;*/
+	height: 4em;
+	overflow: hidden;
+
+	position: relative;
+	z-index: 0;
+
+	/*
+	box-shadow: 0px 0px 1px #111111,
+				0px 0px 8px #444444;
+	*/
+}
+
+.tape-inner {
+	width: 200%;
+	height: 4em;
+	overflow: hidden;
+	position: relative;
+	left: 0px;
+	-webkit-animation: move-tape 10s;
+	-webkit-animation-iteration-count: infinite;
+	 -webkit-animation-timing-function: linear;
+}
+
+@-webkit-keyframes move-tape {
+	0% { left: 0%;}
+	100% { left: -100%; }
+}
+
+.tape-trades {
+	
+}
+
+.trade-event {
+	display: inline-block;
+	overflow: hidden;
+	float:left;
+	width: 12.5%;
+	height: 100%;
+	font-size: 200%;
+	margin-top: auto;
+	margin-bottom: auto;	
+}
+
+.down {
+	color: rgba(255,0,0,.6);
+	-webkit-animation: neon-red 1.5s ease-in-out infinite alternate;
+	-moz-animation: neon-red 1.5s ease-in-out infinite alternate;
+	animation: neon-red 1.5s ease-in-out infinite alternate;
+}
+
+.up {
+	color: rgba(0,255,0,.6);
+	-webkit-animation: neon-green 1.5s ease-in-out infinite alternate;
+	-moz-animation: neon-green 1.5s ease-in-out infinite alternate;
+	animation: neon-green 1.5s ease-in-out infinite alternate;
+}
+
+.trade-event:hover {
+	
+	color: rgba(255,255,255,.6);
+
+	-webkit-animation: neon-white 2s ease-in-out infinite alternate;
+	-moz-animation: neon-white 2s ease-in-out infinite alternate;
+	animation: neon-white 2s ease-in-out infinite alternate;
+	
+	/*
+	background-color: #000;
+	*/
+}
+
+.ticker {
+	display: inline;
+}
+
+.exchange-short {
+	display: inline;
+}
+
+.price {
+	display: inline;
+}
+
+.amount {
+	display: inline;
+}
+
+.sup {
+	vertical-align: super;
+}
+
+.sub {
+	vertical-align: sub;
+}
+
+.headline {
+	/* same as .trade-event with different color*/
+	display: inline-block;
+	overflow: hidden;
+	float: right;
+	padding: 0px 8px 0px 8px;
+
+	height: 100%;
+	font-size: 275%;
+
+	color: rgba(250,105,0,.6);
+	-webkit-animation: neon-orange 1.5s ease-in-out infinite alternate;
+	-moz-animation: neon-orange 1.5s ease-in-out infinite alternate;
+	animation: neon-orange 1.5s ease-in-out infinite alternate;
+}
+
+.headline:hover {
+	color: rgba(255,255,255,.6);
+
+	-webkit-animation: neon-white 2s ease-in-out infinite alternate;
+	-moz-animation: neon-white 2s ease-in-out infinite alternate;
+	animation: neon-white 2s ease-in-out infinite alternate;
+}
+
+.footer {
+	vertical-align: bottom;
+}
+
+.info-nav {
+
+}
+
+.nav-link {
+	display: inline-block;
+	overflow: hidden;
+
+	height: 100%;
+	font-size: 150%;
+
+	padding: 0px 8px 0px 8px;
+
+	margin-top: auto;
+	margin-bottom: auto;
+
+	color: rgba(55,55,55,.6);
+
+	-webkit-animation: neon-grey 2s ease-in-out infinite alternate;
+	-moz-animation: neon-grey 2s ease-in-out infinite alternate;
+	animation: neon-grey 2s ease-in-out infinite alternate;
+}
+
+.nav-link:hover {
+	color: rgba(255,255,255,.6);
+
+	-webkit-animation: neon-white 2s ease-in-out infinite alternate;
+	-moz-animation: neon-white 2s ease-in-out infinite alternate;
+	animation: neon-white 2s ease-in-out infinite alternate;
+}
+
+.grid-layer {
+	/*
+	background-color: rgba(0,0,0,0.0);
+	
+	background-image: linear-gradient(rgba(0,0,0,0.9) 1px, transparent 1px),
+	linear-gradient(90deg, rgba(0,0,0,0.9) 1px, transparent 1px),
+	linear-gradient(rgba(0,0,0,0.9) 1px, transparent 1px),
+	linear-gradient(90deg, rgba(0,0,0,0.9) 1px, transparent 1px);
+	background-size:5px 5px, 5px 5px, 5px 5px, 5px 5px;
+	background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+
+	content: '';
+	*/
+	/*pointer-events: none;*/
+
+	/*z-index: 1;*/
+
+}
+
+/*glow for webkit*/
+@-webkit-keyframes neon-red {
+  from {
+    text-shadow: 0 0 1px #ff1100,
+    			0 0 10px #ff1100;
+  }
+  to {
+    text-shadow: 0 0 3px #ff1100,
+    			0 0 8px #ff1100;
+  }
+}
+
+@-webkit-keyframes neon-green {
+  from {
+    text-shadow: 0 0 1px #11ff00,
+    			0 0 10px #11ff00;
+  }
+  to {
+    text-shadow: 0 0 3px #11ff00,
+    			0 0 8px #11ff00;
+  }
+}
+
+@-webkit-keyframes neon-orange {
+  from {
+    text-shadow: 0 0 1px #FA6900,
+    			0 0 10px #FA6900;
+  }
+  to {
+    text-shadow: 0 0 3px #FA6900,
+    			0 0 8px #FA6900;
+  }
+}
+
+@-webkit-keyframes neon-white {
+  from {
+    text-shadow: 0 0 1px #fff,
+    			0 0 10px #fff;
+  }
+  to {
+    text-shadow: 0 0 5px #fff,
+    			0 0 10px #fff;
+  }
+}
+
+@-webkit-keyframes neon-grey {
+  from {
+    text-shadow: 0 0 1px #333333,
+    			0 0 10px #333333;
+  }
+  to {
+    text-shadow: 0 0 3px #333333,
+    			0 0 8px #333333;
+  }
+}
+
+@-webkit-keyframes neon2 {
+  from {
+    text-shadow: 0 0 10px #fff,
+               0 0 20px  #fff,
+               0 0 30px  #fff,
+               0 0 40px  #FF1177,
+               0 0 70px  #FF1177,
+               0 0 80px  #FF1177,
+               0 0 100px #FF1177,
+               0 0 150px #FF1177;
+  }
+  to {
+    text-shadow: 0 0 5px #fff,
+               0 0 10px #fff,
+               0 0 15px #fff,
+               0 0 20px #FF1177,
+               0 0 35px #FF1177,
+               0 0 40px #FF1177,
+               0 0 50px #FF1177,
+               0 0 75px #FF1177;
+  }
+}

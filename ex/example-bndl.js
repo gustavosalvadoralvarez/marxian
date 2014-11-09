@@ -4601,25 +4601,45 @@ var get_ticker_data = function(prev, cur, callback) {
 	}])
 }
 
-var update_ticker = state.util.view_buffer.lifo('ticker', 200)
+
+var update_ticker = function newest_doubled(k, v) {
+	console.log('view called');
+	/*
+	var parent = document.getElementById('ticker');
+	try {
+		parent.removeEventListener('animationiteration', _list);
+		parent.removeEventListener('webkitAnimationIteration', _list);
+	} catch(e){
+		// work around for lack of onanimationiteration
+	}
+	var _list = function() {
+		console.log('list called')
+		var progeny = parents.children..split(0, 4).map(function(el) {
+			return el.outerHTML
+		}).concat(v);
+		parent.innerHTML = progeny.join('\n');
+	}
+	parent.addEventListener('animationitterlation', _list);
+	parent.addEventListener('webkitAnimationIteration', _list);*/
+}
 
 ticker.data({
-		frequency: 300,
-		// poll how often?
-		method: "get",
-		// what HTTP method to use?
-		url: 'https://s2.bitcoinwisdom.com/ticker?',
-		// URL string
-		key: "ticker",
-		//key related this request with a particular view
-		filter: "standard",
-		// collapse into processes?
-		processes: [get_ticker_data],
-		//what to do with data before passing on to view (line 11)
-		template: ticker_template
-	}).consumer({
-		'ticker': update_ticker
-	})
+	frequency: 300,
+	// poll how often?
+	method: "get",
+	// what HTTP method to use?
+	url: 'https://s2.bitcoinwisdom.com/ticker?',
+	// URL string
+	key: "ticker",
+	//key related this request with a particular view
+	filter: "standard",
+	// collapse into processes?
+	processes: [get_ticker_data],
+	//what to do with data before passing on to view (line 11)
+	template: ticker_template
+}).consumer({
+	'ticker': update_ticker
+})
 
 /*
 style="width:0,height:0,display:none;visibility:hidden"
@@ -17995,13 +18015,21 @@ module.exports = function mk_render(html, obj) {
 	}
 }
 },{"hyperglue":93}],98:[function(require,module,exports){
-module.exports.lifo = function(parent, interval) {
+module.exports.fifo = function(parent, interval, max_buff) {
 	var parent = document.getElementById(parent),
 		buffer = [];
 	return function buffered(k, v) {
-		console.log('view called')
+		console.log('view called');
+		if (v && typeof v !== 'string'){
+			v = v.toString();
+		}
+		if (v && !buffer.length){ // these conditions handle cases
+			buffer = buffer.push(v); // where view was called by 
+			return setTimeout(interval, buffered);			
+		}
 		if (v) {
-			buffer = buffer.concat(v);
+			buffer = buffer.push(v);
+			return
 		}
 		var nxt = buffer.shift();
 		var frst = parent.children[0];
@@ -18014,6 +18042,18 @@ module.exports.lifo = function(parent, interval) {
 		if (buffer.length) {
 			setTimeout(interval, buffered);
 		}
+	}
+}
+
+module.exports.newest = function(parent, inverval) {
+	var parent = document.getElementById(parent),
+		buffer;
+	return function newest(k, v) {
+		console.log('view called');
+		if (Array.isArray(v)){
+			v = v.join('\n');
+		}
+		parent.innerHTML = v.toString();
 	}
 }
 },{}]},{},[25]);
