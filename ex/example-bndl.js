@@ -4530,22 +4530,20 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":23,"_process":9,"inherits":7}],25:[function(require,module,exports){
 var Marx = require('../index.js');
 
-var state = new Marx('example', {
+var State = new Marx('example', {
 	storage: 'session'
 })
 
 
 // init stuff
-var ticker = state.worker('#ticker', "XMLHttpRequest");
+var ticker = State.worker('#ticker', "XMLHttpRequest");
 
-var ticker_template = '<div class="trade-event up">\
-					<div class="ticker sup">BTCUSD</div>\
-					<div class="exchange-short sub">BFX</div>\
-					<div class="price sup">348.24</div>\
-					<div class="amount sub">10.23</div>\
-				</div>';
-
-var get_ticker_data = function(prev, cur, callback) {
+var process_ticker_data = function(prev, cur, callback) {
+	function unix_to_human(unix) {
+		//console.log(unix)
+		var human = new Date(unix * 1000);
+		return human.getHours() + ':' + human.getMinutes();
+	}
 	return callback(null, [{
 		'.ticker': {
 			_text: "BTCUSD"
@@ -4557,7 +4555,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.bitfinexbtcusd.last
 		},
 		'.amount': {
-			_text: prev.bitfinexbtcusd.date
+			_text: unix_to_human(prev.bitfinexbtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -4570,7 +4568,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.bitstampbtcusd.last
 		},
 		'.amount': {
-			_text: prev.bitstampbtcusd.date
+			_text: unix_to_human(prev.bitstampbtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -4583,7 +4581,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.btcebtcusd.last
 		},
 		'.amount': {
-			_text: prev.btcebtcusd.date
+			_text: unix_to_human(prev.btcebtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -4596,34 +4594,19 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.huobibtccny.last
 		},
 		'.amount': {
-			_text: prev.huobibtccny.date
+			_text: unix_to_human(prev.huobibtccny.date)
 		}
-	}])
+	}], {
+		template: '<div class="trade-event up">\
+					<div class="ticker sup">BTCUSD</div>\
+					<div class="exchange-short sub">BFX</div>\
+					<div class="price sup">348.24</div>\
+					<div class="amount sub">10.23</div>\
+				</div>'
+	})
 }
 
-
-var update_ticker = function newest_doubled(k, v) {
-	console.log('view called');
-	/*
-	var parent = document.getElementById('ticker');
-	try {
-		parent.removeEventListener('animationiteration', _list);
-		parent.removeEventListener('webkitAnimationIteration', _list);
-	} catch(e){
-		// work around for lack of onanimationiteration
-	}
-	var _list = function() {
-		console.log('list called')
-		var progeny = parents.children..split(0, 4).map(function(el) {
-			return el.outerHTML
-		}).concat(v);
-		parent.innerHTML = progeny.join('\n');
-	}
-	parent.addEventListener('animationitterlation', _list);
-	parent.addEventListener('webkitAnimationIteration', _list);*/
-}
-
-ticker.data({
+ticker.source({
 	frequency: 300,
 	// poll how often?
 	method: "get",
@@ -4634,12 +4617,64 @@ ticker.data({
 	//key related this request with a particular view
 	filter: "standard",
 	// collapse into processes?
-	processes: [get_ticker_data],
-	//what to do with data before passing on to view (line 11)
-	template: ticker_template
-}).consumer({
-	'ticker': update_ticker
+	processes: [process_ticker_data],
 })
+
+
+var btcwsdm_ws = 'wss://d5.bitcoinwisdom.com/?symbol=';
+
+var btcwsdm_symbols = ["bitfinexbtcusd", "bitstampbtcusd", "btcebtcusd", "huobibtccny"];
+
+var btcwsdm = State.worker('#btcwsdm', 'WebSocket');
+
+var to_console = function(prev, cur, callback, req) {
+	console.log(JSON.stringify(cur));
+	callback(null, cur)
+}
+
+var process_btcwisdom = function(prev, cur, callback, req) {
+	var symbol = req.key,
+		args = {};
+	console.log("pbtc")
+	if (cur.trades) {
+		args.template = '<div class="trade-event up">\
+					<div class="ticker sup">BTCUSD</div>\
+					<div class="exchange-short sub">BFX</div>\
+					<div class="price sup">348.24</div>\
+					<div class="amount sub">10.23</div>\
+				</div>';
+		args.key = symbol + "/trade_event";
+		callback(null, {
+			'.ticker': {
+				_text: 'btc' + symbol.split('btc')[1]
+			},
+			'.exchange-short': {
+				_text: symbol.split('btc')[0].replace(/i|e/g, '').toUpperCase()
+			},
+			'.price': {
+				_text: cur.trades[0].price
+			},
+			'.amount': {
+				_text: cur.trades[0].amount
+			}
+		}, args)
+	} else if (cur.sdepth) {
+		args.key = symbol + "/orderbook";
+		callback(null, cur.sdepth.return, args)
+	}
+}
+
+btcwsdm_symbols.forEach(function _data(symbol) {
+	btcwsdm.source({
+		url: btcwsdm_ws,
+		querystring: symbol,
+		key: symbol,
+		filter: 'standard',
+		processes: [process_btcwisdom]
+	})
+
+})
+
 
 /*
 style="width:0,height:0,display:none;visibility:hidden"
@@ -4697,7 +4732,6 @@ symbols.forEach(function(symbol) {
 },{"../index.js":26}],26:[function(require,module,exports){
 var Store = require('./lib/marx-store.js');
 var Resource = require('./lib/marx-resource.js')
-var Render = require('./util/hgrender2.js')
 
 
 module.exports = function Marx(name, ops) {
@@ -4712,11 +4746,51 @@ module.exports = function Marx(name, ops) {
 		self._workers[name] = resource = new Resource.input(name, typ, store);
 		return resource;
 	}
-	self.view = Render;
+	
 	return self
 }
-},{"./lib/marx-resource.js":27,"./lib/marx-store.js":28,"./util/hgrender2.js":97,"./util/view-buffer.js":98}],27:[function(require,module,exports){
+
+
+/*
+	Documents are valid strings of html, applications are programs
+	that run in a browser and have access (but do not necessarilly involve or modify)
+	the 'document' object. 
+	Applications must be composed of at least one Document
+1. 	All procedures that do not perform CRUD on the DOM should be 
+	implemented in CSS (separation of concerns)
+2.	All procedures that respond to user actions should be decoupled
+	from the underlying application state
+3.	All prceedures that do not fall into 1 or 2 should be performed in 
+	a separate thread (unless this leads to an overall detriment to ux)
+4.	When conflicts arise, all procedures in an application should differ to proceedures in 2
+5.  Data should flow uniformly throughout the application and independently of
+	proceedures in 1 and 2 (though it may of course trgger those in 1)
+	(Application !== document !== main event loop)
+
+
+6.	Documents should support hierarchical composition (nesting) from sub documents 
+	with heretogenous sources (different transports-- ajax, websockets, fallback structures, and 
+	different  request instances on each transport)
+7. Documents should be composed independently from the application but only view conditionally to it 
+	(All documents in an application should evaluate to a string of valid html, and no documents should )
+
+
+
+
+7.	The state of a document at any given time should be a function of the states
+	of its component documents (i.e. a document should not require mutation of its component documents)
+8.	Data from one document should be accessible to all sibling documents 
+	but flow through the containing application without any sideeffects in the state data of 
+	anuy other sibling
+	(All sub documents must be able affect the state of their containing document, but must never be 
+	able to affect that of their sibling documents)
+9. 	Only one modification to the state of the application should be performed within 
+	an instance of the stack
+	(Application state should be shared among component documents as a semaphore with availability of 1)
+	*/
+},{"./lib/marx-resource.js":27,"./lib/marx-store.js":28,"./util/view-buffer.js":95}],27:[function(require,module,exports){
 var webworkify = require('webworkify');
+
 
 module.exports.input = function Input_Resource(name, typ, store, fltr) {
 	////////////////////////////////////////////////////////////////////
@@ -4726,7 +4800,7 @@ module.exports.input = function Input_Resource(name, typ, store, fltr) {
 		worker;
 	switch (typ) {
 		case "XMLHttpRequest":
-			worker = webworkify(require('./marx_workers/ajaxr.js'));
+			worker = webworkify(require('./marx_workers/ajax.js'));
 			break;
 		case "WebSocket":
 			worker = webworkify(require('./marx_workers/websocket.js'));
@@ -4740,7 +4814,8 @@ module.exports.input = function Input_Resource(name, typ, store, fltr) {
 	}
 	console.log(worker)
 	store.attach(worker, name);
-	self.data = function request(requestobj) {
+	self.source = function request(requestobj) {
+		console.log(requestobj)
 		if (requestobj.processes) {
 			var cap_re = RegExp('^(function [^{].*)');
 			requestobj.processes = requestobj.processes.map(
@@ -4764,9 +4839,8 @@ module.exports.input = function Input_Resource(name, typ, store, fltr) {
 	}
 	return self;
 }
-},{"./marx_workers/ajaxr.js":29,"./marx_workers/websocket.js":30,"webworkify":95}],28:[function(require,module,exports){
+},{"./marx_workers/ajax.js":29,"./marx_workers/websocket.js":30,"webworkify":93}],28:[function(require,module,exports){
 (function (process){
-var hyperglue = require('hyperglue')
 
 module.exports = Marx_db;
 
@@ -4783,6 +4857,7 @@ function Marx_db(storage) {
 	var self = this,
 		_subs = {},
 		_tmps = {},
+		_index = {},
 		Store;
 	console.log("Marx_db initializing...")
 	if ((function supports_html5_Store() {
@@ -4824,11 +4899,24 @@ function Marx_db(storage) {
 	}
 
 	function _get(collection, key, callback) {
+		var val;
+		if (!key){
+			_index[collection].forEach(function(v){
+				val +=  Store[_key(collection, key)]
+			})
+		}
 		var data = Store[_key(collection, key)];
 		return callback(null, key, data)
 	}
 
 	function _set(collection, key, value, callback) {
+		var indx = _index[collection] = _index[collection] || []; 
+		if (indx.indexOf(key) === -1){
+			indx.push(key);
+		}
+		if (typeof value !== 'string'){
+			value = JSON.stringify(value)
+		}
 		Store[_key(collection, key)] = value;
 		return callback(null, key, value);
 	}
@@ -4874,25 +4962,25 @@ function Marx_db(storage) {
 			ksub.push(sub[scribers])
 		}
 	}
-
+	window._marx = self;
 	return self;
 }
 }).call(this,require('_process'))
-},{"_process":9,"hyperglue":93}],29:[function(require,module,exports){
+},{"_process":9}],29:[function(require,module,exports){
 var Filter = require('../../util/filter.js');
-var cheerio = require('cheerio');
+var cheerio = require('cheerio'); //had to modify cheerio to fix webworker bug, dont want to update
 
 module.exports = function ajax_worker(self) {
 	self.addEventListener('message', function ajax_req(msg) {
 		var last = '',
 			request = msg.data,
 			filter, transport;
-		console.log(request);
+		//console.log(request);
 		filter = Filter(request.filter);
 		if (request.processes) { //cache request processes 
 			var processes = request.processes.map(function mk_process(fnbody) {
 				try {
-					fn = new Function('prev', 'cur', 'callback', fnbody);
+					fn = new Function('prev', 'cur', 'callback', 'req', fnbody);
 					return fn;
 				} catch (e) {
 					return self.postMessage({
@@ -4907,19 +4995,26 @@ module.exports = function ajax_worker(self) {
 		try {
 			setInterval(exec_req, request.frequency);
 
-			function out(data) {
-				var value;
-				if (Array.isArray(data)) {
-					value = data.map(function(v) {
-						return render_template(request.template, v)
-					})
+			function out(data, args) {
+				var value, template;
+				console.log(args)
+				template = args ? args.template : request.template;
+				if (template) {
+					if (Array.isArray(data)) {
+						value = data.map(function(v) {
+							return render_template(template, v)
+						})
+					} else {
+						value = render_template(template, data)
+					}
+
 				} else {
-					value = render_template(request.template, data)
+					value = JSON.stringifu(data)
 				}
-				console.log(value)
-				self.postMessage({
-					"set":{
-						key: request.key,
+				//console.log(value)
+				return self.postMessage({
+					"set": {
+						key: request.key || args.key,
 						value: value
 					}
 				})
@@ -4946,6 +5041,7 @@ module.exports = function ajax_worker(self) {
 					return res;
 				}
 			}
+
 			function exec_req() {
 				transport = new XMLHttpRequest();
 				transport.onload = function(res) {
@@ -4956,19 +5052,20 @@ module.exports = function ajax_worker(self) {
 								var counter = 0,
 									ores = fres,
 									_callback;
-								_callback = function(err, nres) {
+								_callback = function(err, nres, args) {
 									if (err) {
 										callback(err);
 									}
 									if (++counter === processes.length) {
-										out(nres)
+										console.log(args)
+										out(nres, args)
 									} else {
-										processes[counter](ores, nres, _callback);
+										processes[counter](ores, nres, _callback, args || request);
 									}
 									ores = nres;
 									return
 								}
-								return processes[0](res, fres, _callback);
+								return processes[0](res, fres, _callback, request);
 							} else {
 								out(res);
 							}
@@ -4981,34 +5078,34 @@ module.exports = function ajax_worker(self) {
 			}
 		} catch (e) {
 			self.postMessage({
-				error: {
-					message: err,
-					request: request
-				}
+				error: e
 			})
 		}
 	})
 }
-},{"../../util/filter.js":96,"cheerio":31}],30:[function(require,module,exports){
-var Filter = require('../../util/filter.js')
+},{"../../util/filter.js":94,"cheerio":31}],30:[function(require,module,exports){
+var Filter = require('../../util/filter.js');
+var cheerio = require('cheerio'); //had to modify cheerio to fix webworker bug, dont want to update
+
 
 module.exports = function websocket_worker(self) {
+	self.sockets = {}; // cache sockets
 	self.addEventListener('message', function open_ws(msg) {
 		var last = '',
 			request = msg.data,
 			filter, transport;
 		filter = Filter(request.filter);
 		//console.log(request)
-		if (request.processes) { //cache request processes 
+		if (request.processes) { // init request processes 
 			var processes = request.processes.map(function mk_process(fnbody) {
 				var fn;
 				try {
-					fn = new Function('prev', 'cur', 'callback', fnbody);
+					fn = new Function('prev', 'cur', 'callback', 'req', fnbody);
 					return fn;
 				} catch (e) {
 					return self.postMessage({
 						error: {
-							message: err,
+							message: e,
 							request: request
 						}
 					})
@@ -5016,75 +5113,109 @@ module.exports = function websocket_worker(self) {
 			})
 		}
 		try {
+			function out(data, args) {
+				var value, template;
+				template = args ? args.template : request.template;
+				console.log(data)
+				console.log(args)
+				if (template) {
+					if (Array.isArray(data)) {
+						value = data.map(function(v) {
+							return render_template(template, v)
+						})
+					} else {
+						value = render_template(template, data)
+					}
+
+				} else {
+					value = JSON.stringify(data);
+				}
+				//console.log(value)
+				return self.postMessage({
+					"set": {
+						key: args.key || request.key,
+						value: value
+					}
+				})
+
+				function render_template(template, data) {
+					var parent = cheerio.load(template),
+						child, attributes, attribute, str, res;
+					for (child in data) {
+						attributes = data[child];
+						for (attribute in attributes) {
+							str = String(attributes[attribute]);
+							if (attribute === '_text') {
+								parent(child).text(str);
+							} else if (attribute === '_html') {
+								parent(child).html(str);
+							} else {
+								parent(child).attr(attribute, str);
+							}
+
+						}
+
+					}
+					res = parent.html();
+					return res;
+				}
+			}
 			return exec_req();
+
 			function exec_req() {
-				var endpoint = request.url + (request.querystring || '');
-				transport = new WebSocket(endpoint);
+				var endpoint = request.url + (request.querystring || ''),
+					handler, transport;
+				handler = function(msg) {
+					var res = JSON.parse(msg.data);
+					if (res.type === 'ping') {
+						return
+					}
+					if (msg.data !== last) {
+						if (processes) {
+							var counter = 0,
+								ores = res,
+								_callback;
+							_callback = function(err, nres, args) {
+								if (err) {
+									callback(err);
+								}
+								if (++counter === processes.length) {
+									out(nres, args);
+								} else {
+									processes[counter](ores, nres, _callback, args || request);
+								}
+								ores = nres;
+								return
+							}
+							return processes[0](last, res, _callback, request);
+						} else {
+							out(res);
+						}
+					}
+					last = msg.data;
+				}
+				if (self.sockets[endpoint]) {
+					transport = self.sockets[endpoint];
+					transport.addEventListener('message', handler);
+					return
+				}
+				self.sockets[endpoint] = transport = new WebSocket(endpoint);
 				transport.onopen = function() {
 					console.log("socket opened for " + request.url);
 				};
-				transport.onclose = function () {
+				transport.onclose = function() {
 					if (request.persist) {
 						open_ws(msg);
 					}
 				}
-				transport.onmessage = function(msg) {
-					var res = JSON.parse(msg.data);
-					if (res.type === 'ping'){
-						return
-					}
-					if (msg.data !== last) {
-						filter(last, res, function process_runner(err, fres) {
-							if (processes) {
-								var counter = 0,
-									ores = fres,
-									_callback;
-								_callback = function(err, nres) {
-									if (err) {
-										callback(err);
-									}
-									if (++counter === processes.length) {
-										self.postMessage({
-											"set": {
-												key: request.key || '!',
-												value: JSON.stringify(nres)
-											}
-										})
-									} else {
-										processes[counter](ores, nres, _callback);
-									}
-									ores = nres;
-									return
-								}
-								return processes[0](res, fres, _callback);
-							} else {
-								self.postMessage({
-									"set": {
-										key: request.key || '!',
-										value: JSON.stringify(res)
-									}
-								})
-							}
-						})
-					}
-					last = msg.data;
-				}
+				transport.addEventListener('message', handler);
 			}
 		} catch (e) {
-			self.postMessage({
-				error: {
-					message: err,
-					request: request
-				}
-			})
+			console.log(e)
 		}
 	})
 }
-
-
-
-
-},{"../../util/filter.js":96}],31:[function(require,module,exports){
+},{"../../util/filter.js":94,"cheerio":31}],31:[function(require,module,exports){
 /**
  * Export cheerio (with )
  */
@@ -11195,9 +11326,8 @@ module.exports=require(66)
     // ES5 clears this up by stating that literals must use built-in constructors.
     // See http://es5.github.io/#x11.1.5.
     context = context ? _.defaults(root.Object(), context, _.pick(root, contextProps)) : root;
-    if (typeof context.Object !== 'function') {
-      context = this;
-    }
+    if (typeof context.Object !== 'function') context = this;
+
     /** Native constructor references */
     var Array = context.Array,
         Boolean = context.Boolean,
@@ -17600,7 +17730,7 @@ module.exports={
   "homepage": "https://github.com/cheeriojs/cheerio",
   "_id": "cheerio@0.18.0",
   "_shasum": "4e1c06377e725b740e996e0dfec353863de677fa",
-  "_from": "cheerio@",
+  "_from": "cheerio@^0.18.0",
   "_npmVersion": "2.1.3",
   "_nodeVersion": "0.10.31",
   "_npmUser": {
@@ -17626,199 +17756,11 @@ module.exports={
     "tarball": "http://registry.npmjs.org/cheerio/-/cheerio-0.18.0.tgz"
   },
   "directories": {},
-  "_resolved": "https://registry.npmjs.org/cheerio/-/cheerio-0.18.0.tgz"
+  "_resolved": "https://registry.npmjs.org/cheerio/-/cheerio-0.18.0.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],93:[function(require,module,exports){
-var domify = require('domify');
-module.exports = hyperglue;
-
-var outer = null;
-
-function hyperglue (src, updates) {
-    if (!updates) updates = {};
-    
-    var dom = typeof src === 'object' ? [ src ] : domify(src);
-    if (!outer) outer = document.createElement('div');
-    
-    forEach(objectKeys(updates), function (selector) {
-        var value = updates[selector];
-        forEach(dom, function (d) {
-            var parentNode = d.parentNode;
-            
-            if (selector === ':first') {
-                bind(d, value);
-            }
-            else if (/:first$/.test(selector)) {
-                var k = selector.replace(/:first$/, '');
-                if (parentNode) parentNode.removeChild(d);
-                outer.appendChild(d);
-                
-                var elem = outer.querySelector(k);
-                outer.removeChild(d);
-                
-                if (parentNode) parentNode.appendChild(d);
-                if (elem) bind(elem, value);
-            }
-            else {
-                if (parentNode) parentNode.removeChild(d);
-                outer.appendChild(d);
-                
-                var nodes = d.parentNode.querySelectorAll(selector);
-                outer.removeChild(d);
-                
-                if (parentNode) parentNode.appendChild(d);
-                
-                if (nodes.length === 0) return;
-                for (var i = 0; i < nodes.length; i++) {
-                    bind(nodes[i], value);
-                }
-            }
-        });
-    });
-    return dom.length === 1 ? dom[0] : dom;
-}
-
-function bind (node, value) {
-    if (isElement(value)) {
-        node.innerHTML = '';
-        node.appendChild(value);
-    }
-    else if (isArray(value)) {
-        for (var i = 0; i < value.length; i++) {
-            var e = hyperglue(node.cloneNode(true), value[i]);
-            node.parentNode.insertBefore(e, node);
-        }
-        node.parentNode.removeChild(node);
-    }
-    else if (value && typeof value === 'object') {
-        forEach(objectKeys(value), function (key) {
-            if (key === '_text') {
-                setText(node, value[key]);
-            }
-            else if (key === '_html' && isElement(value[key])) {
-                node.innerHTML = '';
-                node.appendChild(value[key]);
-            }
-            else if (key === '_html') {
-                node.innerHTML = value[key];
-            }
-            else node.setAttribute(key, value[key]);
-        });
-    }
-    else setText(node, value);
-}
-
-function forEach(xs, f) {
-    if (xs.forEach) return xs.forEach(f);
-    for (var i = 0; i < xs.length; i++) f(xs[i], i)
-}
-
-var objectKeys = Object.keys || function (obj) {
-    var res = [];
-    for (var key in obj) res.push(key);
-    return res;
-};
-
-function isElement (e) {
-    return e && typeof e === 'object' && e.childNodes
-        && (typeof e.appendChild === 'function'
-        || typeof e.appendChild === 'object')
-    ;
-}
-
-var isArray = Array.isArray || function (xs) {
-    return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function setText (e, s) {
-    e.innerHTML = '';
-    var txt = document.createTextNode(String(s));
-    e.appendChild(txt);
-}
-
-},{"domify":94}],94:[function(require,module,exports){
-
-/**
- * Expose `parse`.
- */
-
-module.exports = parse;
-
-/**
- * Wrap map from jquery.
- */
-
-var map = {
-  option: [1, '<select multiple="multiple">', '</select>'],
-  optgroup: [1, '<select multiple="multiple">', '</select>'],
-  legend: [1, '<fieldset>', '</fieldset>'],
-  thead: [1, '<table>', '</table>'],
-  tbody: [1, '<table>', '</table>'],
-  tfoot: [1, '<table>', '</table>'],
-  colgroup: [1, '<table>', '</table>'],
-  caption: [1, '<table>', '</table>'],
-  tr: [2, '<table><tbody>', '</tbody></table>'],
-  td: [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-  th: [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-  col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
-  _default: [0, '', '']
-};
-
-/**
- * Parse `html` and return the children.
- *
- * @param {String} html
- * @return {Array}
- * @api private
- */
-
-function parse(html) {
-  if ('string' != typeof html) throw new TypeError('String expected');
-  
-  // tag name
-  var m = /<([\w:]+)/.exec(html);
-  if (!m) throw new Error('No elements were generated.');
-  var tag = m[1];
-  
-  // body support
-  if (tag == 'body') {
-    var el = document.createElement('html');
-    el.innerHTML = html;
-    return [el.removeChild(el.lastChild)];
-  }
-  
-  // wrap map
-  var wrap = map[tag] || map._default;
-  var depth = wrap[0];
-  var prefix = wrap[1];
-  var suffix = wrap[2];
-  var el = document.createElement('div');
-  el.innerHTML = prefix + html + suffix;
-  while (depth--) el = el.lastChild;
-
-  return orphan(el.children);
-}
-
-/**
- * Orphan `els` and return an array.
- *
- * @param {NodeList} els
- * @return {Array}
- * @api private
- */
-
-function orphan(els) {
-  var ret = [];
-
-  while (els.length) {
-    ret.push(els[0].parentNode.removeChild(els[0]));
-  }
-
-  return ret;
-}
-
-},{}],95:[function(require,module,exports){
 var bundleFn = arguments[3];
 var sources = arguments[4];
 var cache = arguments[5];
@@ -17872,7 +17814,7 @@ module.exports = function (fn) {
     ));
 };
 
-},{}],96:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 module.exports = function(fn) {
 	if (RegExp('^.*(callback\(.*\)).*').test(fn_body)) {
 		var fn_body = decap_func(fn);
@@ -17972,49 +17914,7 @@ standard(old, new2, function(err, res) {
 	console.log(res)
 })
 */
-},{}],97:[function(require,module,exports){
-var hyperglue = require('hyperglue');
-
-module.exports = function mk_render(html, obj) {
-	return function render(data) {
-		data = JSON.parse(data)
-		console.log(data)
-		var hgmap = mk_hgmap(data);
-		return hyperglue(html, hgmap)
-	}
-	function mk_hgmap(data) {
-		return _map(obj)
-
-		function _map(obj) {
-			var key, val;
-			console.log(obj)
-
-			if (Array.isArray(obj)) {
-				return obj.map(function(val) {
-					if (typeof val === 'object') {
-						return _map(val);
-					} else if (data[val]) {
-						return data[val];
-					} else {
-						console.log(val + ' not found in data')
-					}
-				})
-			}
-			for (key in obj) {
-				val = obj[key];
-				if (typeof val === 'object') {
-					obj[key] = _map(val);
-				} else if (data[val]) {
-					obj[key] = data[val];
-				} else {
-					console.log(val + ' not found in data')
-				}
-			}
-			return obj
-		}
-	}
-}
-},{"hyperglue":93}],98:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 module.exports.fifo = function(parent, interval, max_buff) {
 	var parent = document.getElementById(parent),
 		buffer = [];

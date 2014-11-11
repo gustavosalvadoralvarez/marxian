@@ -9,16 +9,21 @@ var state = new Marx('example', {
 var ticker = state.worker('#ticker', "XMLHttpRequest");
 
 var ticker_template = '<div class="trade-event up">\
-					<div class="ticker sup">BTCUSD</div>\
-					<div class="exchange-short sub">BFX</div>\
-					<div class="price sup">348.24</div>\
-					<div class="amount sub">10.23</div>\
-				</div>';
+						<div class="ticker sup"></div>\
+						<div class="exchange-short sub"></div>\
+						<div class="price sup"></div>\
+						<div class="amount sub"></div>\
+					  </div>';
 
 var get_ticker_data = function(prev, cur, callback) {
-	return callback(null, [{
-		'.ticker': {
-			_text: "BTCUSD"
+	function unix_to_human(unix){
+		//console.log(unix)
+		var human = new Date(unix*1000);
+		return human.getHours() + ':'+human.getMinutes();
+	}
+	return callback(null, [{    // all processses must either return an object of the form
+		'.ticker': {             // { selector: { attribute: value }}
+			_text: "BTCUSD"      // or an array of objects in that form
 		},
 		'.exchange-short': {
 			_text: "BFX"
@@ -27,7 +32,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.bitfinexbtcusd.last
 		},
 		'.amount': {
-			_text: prev.bitfinexbtcusd.date
+			_text: unix_to_human(prev.bitfinexbtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -40,7 +45,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.bitstampbtcusd.last
 		},
 		'.amount': {
-			_text: prev.bitstampbtcusd.date
+			_text: unix_to_human(prev.bitstampbtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -53,7 +58,7 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.btcebtcusd.last
 		},
 		'.amount': {
-			_text: prev.btcebtcusd.date
+			_text: unix_to_human(prev.btcebtcusd.date)
 		}
 	}, {
 		'.ticker': {
@@ -66,34 +71,12 @@ var get_ticker_data = function(prev, cur, callback) {
 			_text: prev.huobibtccny.last
 		},
 		'.amount': {
-			_text: prev.huobibtccny.date
+			_text: unix_to_human(prev.huobibtccny.date)
 		}
 	}])
 }
 
-
-var update_ticker = function newest_doubled(k, v) {
-	console.log('view called');
-	/*
-	var parent = document.getElementById('ticker');
-	try {
-		parent.removeEventListener('animationiteration', _list);
-		parent.removeEventListener('webkitAnimationIteration', _list);
-	} catch(e){
-		// work around for lack of onanimationiteration
-	}
-	var _list = function() {
-		console.log('list called')
-		var progeny = parents.children..split(0, 4).map(function(el) {
-			return el.outerHTML
-		}).concat(v);
-		parent.innerHTML = progeny.join('\n');
-	}
-	parent.addEventListener('animationitterlation', _list);
-	parent.addEventListener('webkitAnimationIteration', _list);*/
-}
-
-ticker.data({
+ticker.source({
 	frequency: 300,
 	// poll how often?
 	method: "get",
@@ -101,66 +84,11 @@ ticker.data({
 	url: 'https://s2.bitcoinwisdom.com/ticker?',
 	// URL string
 	key: "ticker",
-	//key related this request with a particular view
+	//key related this request with a particular entry in storage
 	filter: "standard",
 	// collapse into processes?
 	processes: [get_ticker_data],
-	//what to do with data before passing on to view (line 11)
+	//what to do with data before passing on to view 
 	template: ticker_template
-}).consumer({
-	'ticker': update_ticker
 })
 
-/*
-style="width:0,height:0,display:none;visibility:hidden"
-			'<div class="marx-tag"style="width:0,height:0,display:none;visibility:hidden"
-></div>',
-var ticker_view = function update_ticker(key, val) {
-	var map = {
-		'.ticker-name': {
-			_text: 'name'
-		},
-		'.ticker-price': {
-			_text: 'price'
-		},
-		'.ticker-date': {
-			_text: 'date'
-		}
-	}
-	var template_html = "<div class='ticker-el'> \
-			<p><strong>Name:</strong></p>\
-			<p class='ticker-name'></p> \
-			<p><strong>Price:</strong></p>\
-			<p class='ticker-price'></p> \
-			<p><strong>Name:</strong></p>\
-			<p class='ticker-date'></p> \
-		</div>";
-	var render = state.view(template_html, map)
-	return document.getElementById('ticker').appendChild(render(val));
-}
-
-var wisdom = state.worker('wisdom', 'WebSocket');
-
-var wisdom_processor = function get_trades(prev, cur, callback) {
-	console.log(prev)
-	return callback(null, {
-		trades: cur['sdepth']['return']
-	})
-}
-
-var symbols = ["bitfinexbtcusd", "bitstampbtcusd", "btcebtcusd", "btceltcbtc", "btceltcusd", "huobibtccny"];
-
-symbols.forEach(function(symbol) {
-	var consumer = {};
-	consumer[symbol] = function(key, val) {
-		document.getElementById(symbol).innerHTML = val;
-	}
-	wisdom.request({
-		url: 'wss://d5.bitcoinwisdom.com/',
-		querystring: '?symbol=' + symbol,
-		key: symbol,
-		filter: "standard",
-		processes: [wisdom_processor]
-	}).consumer(consumer)
-})
-*/
